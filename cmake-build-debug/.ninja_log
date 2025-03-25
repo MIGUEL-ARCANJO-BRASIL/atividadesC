@@ -1,0 +1,6 @@
+# ninja log v6
+3	323	7645608771199717	build.ninja	105a69710e587243
+26	353	7645608332858482	CMakeFiles/Atividade27_03.dir/questao5.cpp.obj	e17b5b11d2521655
+353	429	7645608336124457	Atividade27_03.exe	88f3b7bf7bcfdf35
+28	349	7645609586007512	CMakeFiles/Atividade27_03.dir/questao5.cpp.obj	e17b5b11d2521655
+31	357	7645609586046946	CMakeFiles/Atividade27_03.dir/JogoVelha.cpp.obj	c00ea2dc547f86ba

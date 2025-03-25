@@ -1,0 +1,3 @@
+C:/Users/migue/CLionProjects/Atividade27_03/cmake-build-debug/CMakeFiles/Atividade27_03.dir
+C:/Users/migue/CLionProjects/Atividade27_03/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/migue/CLionProjects/Atividade27_03/cmake-build-debug/CMakeFiles/rebuild_cache.dir
