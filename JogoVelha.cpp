@@ -147,47 +147,16 @@ void escolherJogada() {
         char jogada[3];
         std::cin >> jogada;
 
-        int linha = jogada[0] - '0'; // Converte o primeiro caractere
-        int coluna = jogada[2] - '0'; // Converte o terceiro caractere
+        int linha = jogada[0] - '1'; // Converte o primeiro caractere
+        int coluna = jogada[2] - '1'; // Converte o terceiro caractere
 
         int jogadaIndex = linha * 10 + coluna;
-        if (linha < 1 || linha > 3 || coluna < 1 || coluna > 3 || matrizVelha[linha - 1][coluna - 1][0] != '-') {
+        if (linha < 0 || linha > 2 || coluna < 0 || coluna > 2 || matrizVelha[linha][coluna][0] != '-') {
             std::cout << "Jogada inválida! Tente novamente." << std::endl;
             system("pause");
             continue;
         }
-        switch (jogadaIndex) {
-            case 11:
-                strcpy(matrizVelha[0][0], jogadaVez ? "X" : "O");
-                break;
-            case 12:
-                strcpy(matrizVelha[0][1], jogadaVez ? "X" : "O");
-                break;
-            case 13:
-                strcpy(matrizVelha[0][2], jogadaVez ? "X" : "O");
-                break;
-            case 21:
-                strcpy(matrizVelha[1][0], jogadaVez ? "X" : "O");
-                break;
-            case 22:
-                strcpy(matrizVelha[1][1], jogadaVez ? "X" : "O");
-                break;
-            case 23:
-                strcpy(matrizVelha[1][2], jogadaVez ? "X" : "O");
-                break;
-            case 31:
-                strcpy(matrizVelha[2][0], jogadaVez ? "X" : "O");
-                break;
-            case 32:
-                strcpy(matrizVelha[2][1], jogadaVez ? "X" : "O");
-                break;
-            case 33:
-                strcpy(matrizVelha[2][2], jogadaVez ? "X" : "O");
-                break;
-            default:
-                std::cout << "Jogada inválida!" << std::endl;
-                break;
-        }
+        strcpy(matrizVelha[linha][coluna], jogadaVez ? "X" : "O");
         jogadaVez = !jogadaVez;
     } while (itsEnd() == 0);
     std::cout << std::endl;
