@@ -26,7 +26,6 @@ void changeTextColor(int color) {
     SetConsoleTextAttribute(hConsole, color);
 }
 
-
 int itsEnd() {
     std::cout << std::endl << std::endl;
     int countDiagonalPrincipal = 0, countDiagonalSecundaria = 0,
@@ -109,9 +108,9 @@ int itsEnd() {
 }
 
 void loadVelha() {
-    std::cout << "     1   2   3" << std::endl << std::endl;
+    std::cout << "        1   2   3" << std::endl << std::endl;
     for (int i = 0; i < 3; ++i) {
-        std::cout << i + 1 << "|   ";
+        std::cout << i + 1 << "|      ";
         for (int j = 0; j < 3; ++j) {
             changeTextColor(matrizVelha[i][j][0] == 'X' ? 10 : 12);
             if (matrizVelha[i][j][0] != 'X' && matrizVelha[i][j][0] != 'O') {
@@ -122,7 +121,7 @@ void loadVelha() {
         }
         changeTextColor(15);
         std::cout << std::endl;
-        std::cout << "   ---|---|----|" << std::endl;
+        std::cout << "      ---|---|----|" << std::endl;
     }
 }
 

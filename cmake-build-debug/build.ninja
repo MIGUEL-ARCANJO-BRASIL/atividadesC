@@ -61,6 +61,18 @@ build CMakeFiles/Atividade27_03.dir/JogoVelha.cpp.obj: CXX_COMPILER__Atividade27
   OBJECT_DIR = CMakeFiles\Atividade27_03.dir
   OBJECT_FILE_DIR = CMakeFiles\Atividade27_03.dir
 
+build CMakeFiles/Atividade27_03.dir/adivinhacao.cpp.obj: CXX_COMPILER__Atividade27_03_unscanned_Debug C$:/Users/migue/CLionProjects/Atividade27_03/adivinhacao.cpp || cmake_object_order_depends_target_Atividade27_03
+  DEP_FILE = CMakeFiles\Atividade27_03.dir\adivinhacao.cpp.obj.d
+  FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
+  OBJECT_DIR = CMakeFiles\Atividade27_03.dir
+  OBJECT_FILE_DIR = CMakeFiles\Atividade27_03.dir
+
+build CMakeFiles/Atividade27_03.dir/damas.cpp.obj: CXX_COMPILER__Atividade27_03_unscanned_Debug C$:/Users/migue/CLionProjects/Atividade27_03/damas.cpp || cmake_object_order_depends_target_Atividade27_03
+  DEP_FILE = CMakeFiles\Atividade27_03.dir\damas.cpp.obj.d
+  FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
+  OBJECT_DIR = CMakeFiles\Atividade27_03.dir
+  OBJECT_FILE_DIR = CMakeFiles\Atividade27_03.dir
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target Atividade27_03
@@ -69,7 +81,7 @@ build CMakeFiles/Atividade27_03.dir/JogoVelha.cpp.obj: CXX_COMPILER__Atividade27
 #############################################
 # Link the executable Atividade27_03.exe
 
-build Atividade27_03.exe: CXX_EXECUTABLE_LINKER__Atividade27_03_Debug CMakeFiles/Atividade27_03.dir/questao5.cpp.obj CMakeFiles/Atividade27_03.dir/JogoVelha.cpp.obj
+build Atividade27_03.exe: CXX_EXECUTABLE_LINKER__Atividade27_03_Debug CMakeFiles/Atividade27_03.dir/questao5.cpp.obj CMakeFiles/Atividade27_03.dir/JogoVelha.cpp.obj CMakeFiles/Atividade27_03.dir/adivinhacao.cpp.obj CMakeFiles/Atividade27_03.dir/damas.cpp.obj
   FLAGS = -g
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\Atividade27_03.dir
