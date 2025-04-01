@@ -37,6 +37,7 @@ void changeTextBold();
 
 void resteText();
 
+//Utilizando Struct - Declaração
 typedef struct {
     char nome[20];
     float preco;
@@ -48,6 +49,7 @@ typedef struct {
     ItemCardapio item;
 } Pessoa;
 
+//Declaração de variáveis globais
 int mesas[30][30];
 Pessoa pessoas[30][30];
 ItemCardapio itens[5];
@@ -71,11 +73,13 @@ void changeTextColor(int color) {
     SetConsoleTextAttribute(hConsole, color);
 }
 
+//Função pra destacar (deixar em negrito)
 void changeTextBold() {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
 }
 
+//Função pra voltar o texto à cor normal
 void resetText() {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
@@ -135,7 +139,9 @@ void mainMenu() {
                 pauseAndClear();
                 break;
             case 6:
+                changeTextBold();
                 printf("Todas as reservas foram limpas!\n");
+                resetText();
                 loadTables();
                 pauseAndClear();
                 break;
@@ -163,7 +169,7 @@ int hasTableAvailable() {
         }
     }
     //Se 'cont' for incrementado até chegar na ultima mesa, quer dizer que todas foram preenchidas
-    return cont == 9 ? 0 : 1;
+    return cont == 900 ? 0 : 1;
 }
 
 //Função pra preencher as mesas
@@ -359,13 +365,15 @@ bool listReservedTables() {
                 printf("| %3d  - %s | ", pessoas[i][j].nmr_mesa, pessoas[i][j].nome);
 
                 if (pessoas[i][j].item.preco != 0 && pessoas[i][j].item.nome[0] != '0') {
-                    printf("\nItem escolhido: %s - R$ %.2f\n", pessoas[i][j].item.nome, pessoas[i][j].item.preco);
+                    printf("Item escolhido: %s - R$ %.2f\n", pessoas[i][j].item.nome, pessoas[i][j].item.preco);
+                } else {
+                    printf("Nenhum pedido!\n");
                 }
                 breakLine = 1;
             }
         }
         changeTextColor(15);
-        if (breakLine) printf("\n");
+        printf(breakLine == 1 ? "\n" : "");
     }
 
     listraTela();
