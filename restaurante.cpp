@@ -95,9 +95,9 @@ void pauseAndClear() {
 
 // função pra apresentar o menu principal
 void mainMenu() {
-    int user_choose = 0;
-
-    do {
+    int user_choice;
+    while (true) {
+        user_choice = 0;
         listraTela();
         printf("Seja Bem-Vindo ao Restaurante WM-Bistrô.\n");
         printf("Por favor, insira a opção que você deseja realizar:\n");
@@ -106,17 +106,25 @@ void mainMenu() {
         printf("2. Visualizar Todas as Mesas.\n");
         printf("3. Visualizar as mesas Disponíveis.\n");
         printf("4. Visualizar as mesas Reservadas.\n");
-        printf("5. Limpar uma reserva.\n");
-        printf("6. Limpar todas as reservas.\n");
-        printf("7. Anotar Pedidos.\n");
+        printf("5. Anotar Pedidos.\n");
+        printf("6. Limpar uma reserva.\n");
+        printf("7. Limpar todas as reservas.\n");
         listraTela();
-        scanf("%d", &user_choose);
+
+        if (scanf("%d", &user_choice) != 1) {
+            changeTextBold();
+            printf("Por favor, insira Apenas números!\n");
+            resetText();
+            while (getchar() != '\n');
+            pauseAndClear();
+            continue;
+        }
 
         //usuario escolhe uma das opções
-        switch (user_choose) {
+        switch (user_choice) {
             case 0:
                 printf("Saindo...");
-                break;
+                return;
 
             case 1:
                 bookTable();
@@ -135,18 +143,18 @@ void mainMenu() {
                 pauseAndClear();
                 break;
             case 5:
-                deleteOneReserve();
+                takeOrder();
                 pauseAndClear();
                 break;
             case 6:
+                deleteOneReserve();
+                pauseAndClear();
+                break;
+            case 7:
                 changeTextBold();
                 printf("Todas as reservas foram limpas!\n");
                 resetText();
                 loadTables();
-                pauseAndClear();
-                break;
-            case 7:
-                takeOrder();
                 pauseAndClear();
                 break;
             default:
@@ -155,7 +163,7 @@ void mainMenu() {
                 pauseAndClear();
                 break;
         }
-    } while (user_choose != 0);
+    }
 }
 
 //Função pra verificar se tem mesas disponíveis
@@ -354,8 +362,8 @@ bool listReservedTables() {
     }
 
     listraTela();
-    printf("Mesas Reservadas: \n");
-    printf("[Mesa - Nome]\n");
+    printf("\nMesas Reservadas: \n");
+    printf("[ Mesa - Nome - Pedido do Cliente ]\n\n");
 
     for (int i = 0; i < 30; ++i) {
         int breakLine = 0;
@@ -414,6 +422,9 @@ void deleteOneReserve() {
         }
 
         if (nmr_mesa == 0) {
+            changeTextBold();
+            printf("Saindo...");
+            resetText();
             return;
         }
         for (int i = 0; i < 30; ++i) {
@@ -456,33 +467,45 @@ void showMenu() {
     printf("0 - Sair\n\n");
 }
 
+//função pra anotar pedido do usuário
 void takeOrder() {
     listraTela();
 
+    //verifica se há mesas reservadas
     if (!verifyReservedTables()) {
         changeTextColor(10);
         printf("Nenhuma mesa foi reservada.\n\n");
         changeTextColor(15);
         return;
     }
-
+    //while para validações
     while (true) {
         int index_i = 0, index_j = 0;
         int nmr_item_menu;
         char nome[30] = "";
-        char nome_aux[30] = "";
-
+        printf("\nDigite 0 para Sair.\n\n");
         printf("Por favor, insira seu nome que foi registrado na reserva: ");
         while (getchar() != '\n');
         scanf("%[^\n]", nome);
 
+        //chama função parar verificar se a String 'nome' contém números e/ou se ela está vazia
         if (!verifyString(nome)) {
             continue;
         }
+
+        //se o usuário digitar '0', sai do menu atual e vai para o anterior
+        if (nome[0] == '0') {
+            changeTextBold();
+            printf("Saindo...");
+            resetText();
+            return;
+        }
+
         bool findNome = false;
 
         for (int i = 0; i < 30; ++i) {
             for (int j = 0; j < 30; ++j) {
+                //o nome q o usuário digitou for igual ao nome que está salo, ele pega os index e para o loop
                 if (strcasecmp(pessoas[i][j].nome, nome) == 0) {
                     printf("%s \n", pessoas[i][j].nome);
                     findNome = true;
@@ -494,6 +517,7 @@ void takeOrder() {
             if (findNome) break;
         }
 
+        //se o nome nao foi achaado no loop, pede pro usuário inserir novamente o nome:
         if (!findNome) {
             changeTextColor(14);
             printf("Nome não encontrado... Tente Novamente!\n");
@@ -501,9 +525,14 @@ void takeOrder() {
             continue;
         }
 
+        //validação para escolha do usuário
         while (true) {
             int user_choice = 0;
+
+            //mostra o cardápio
             showMenu();
+
+            //verifica se o usuário digitou um número inteiro
             if (scanf("%d", &nmr_item_menu) != 1) {
                 changeTextColor(12);
                 printf("Entrada inválida! Por favor, insira um número inteiro.\n\n");
@@ -512,6 +541,7 @@ void takeOrder() {
                 continue;
             }
 
+            //verifica se a opção do usuário é invalida
             if (nmr_item_menu < 0 || nmr_item_menu > 5) {
                 changeTextColor(12);
                 printf("Opção inválida! Escolha um número entre 1 e 5.\n\n");
@@ -519,6 +549,7 @@ void takeOrder() {
                 continue;
             }
 
+            //se o usuário digitar '0', volta pro menu principal
             if (nmr_item_menu == 0) {
                 return;
             }
@@ -547,6 +578,8 @@ void takeOrder() {
     }
 }
 
+
+
 bool verifyString(char str[30]) {
     bool hasNumber = false, hasSpace = true;
     int inicio = 0, fim = strlen(str) - 1;
@@ -568,7 +601,7 @@ bool verifyString(char str[30]) {
 
     for (int n = 0; str[n] != '\0'; n++) {
         if (str[n] != ' ') {
-            if (str[n] >= '0' && str[n] <= '9') {
+            if (str[n] >= '1' && str[n] <= '9') {
                 hasNumber = true;
                 break;
             }
