@@ -39,6 +39,14 @@ void resteText();
 
 void updateInfos();
 
+bool updateName(int index_i, int index_j);
+
+bool updateTable(int index_i, int index_j, int nmr_mesa);
+
+bool updateOrder(int index_i, int index_j);
+
+int confirmAction();
+
 //Utilizando Struct - Declaração
 typedef struct {
     char nome[20];
@@ -103,15 +111,25 @@ void mainMenu() {
         listraTela();
         printf("Seja Bem-Vindo ao Restaurante WM-Bistrô.\n");
         printf("Por favor, insira a opção que você deseja realizar:\n");
+        printf("---------------------------------------------------\n");
         printf("0. Sair.\n");
+        printf("---------------------------------------------------\n");
         printf("1. Reservar Mesa.\n");
+        printf("---------------------------------------------------\n");
         printf("2. Visualizar Todas as Mesas.\n");
+        printf("---------------------------------------------------\n");
         printf("3. Visualizar as mesas Disponíveis.\n");
+        printf("---------------------------------------------------\n");
         printf("4. Visualizar as mesas Reservadas.\n");
+        printf("---------------------------------------------------\n");
         printf("5. Anotar Pedidos.\n");
+        printf("---------------------------------------------------\n");
         printf("6. Atualizar Informações.\n");
+        printf("---------------------------------------------------\n");
         printf("7. Limpar uma reserva.\n");
+        printf("---------------------------------------------------\n");
         printf("8. Limpar todas as reservas.\n");
+        printf("---------------------------------------------------\n");
         listraTela();
 
         if (scanf("%d", &user_choice) != 1) {
@@ -433,6 +451,7 @@ void deleteOneReserve() {
             resetText();
             return;
         }
+        int returnAction = 0;
         for (int i = 0; i < 30; ++i) {
             for (int j = 0; j < 30; ++j) {
                 if (cont == nmr_mesa) {
@@ -443,6 +462,13 @@ void deleteOneReserve() {
                         changeTextColor(15);
                         system("pause");
                     } else {
+                        returnAction = confirmAction();
+                        if (returnAction == 0) {
+                            breakInternLoop = true;
+                            break;
+                        } else if (returnAction == -1) {
+                            return;
+                        }
                         changeTextColor(10);
                         printf("A reservada de número %d foi excluída com sucesso!\n", nmr_mesa);
                         mesas[i][j] = cont;
@@ -506,6 +532,7 @@ void updateInfos() {
         }
         if (user_choice == 0) { return; }
 
+
         printf("Escolha o Número da mesa reservada para as informações serem atualizadas: \n");
         if (scanf("%d", &nmr_mesa) != 1) {
             changeTextBold();
@@ -542,19 +569,35 @@ void updateInfos() {
             while (getchar() != '\n');
             continue;
         }
-
+        char textItemOrder[30];
+        strcpy(textItemOrder, pessoas[index_i][index_j].item.nome[0] == '0'
+                                  ? "Nenhum Pedido"
+                                  : pessoas[index_i][index_j].item.nome);
+        changeTextColor(14);
+        printf("\n\nInformações atuais:\n[mesa] - [nome] - [pedido]\n");
+        printf("%d - %s - %s\n", pessoas[index_i][index_j].nmr_mesa,
+               pessoas[index_i][index_j].nome, textItemOrder
+        );
+        resetText();
         switch (user_choice) {
             case 1:
                 while (true) {
-                    char nome[30];
-                    printf("\n\nDigite o novo nome! \n");
-                    while (getchar() != '\n');
-                    scanf("%[^\n]", nome);
-                    if (!verifyString(nome)) { continue; }
+                    char oldNome[30];
+                    strcpy(oldNome, pessoas[index_i][index_j].nome);
+                    if (!updateName(index_i, index_j)) {
+                        continue;
+                    }
 
-                    printf("Nome antigo: %s\n", pessoas[index_i][index_j].nome);
-                    printf("Nome novo: %s\n", nome);
-                    strcpy(pessoas[index_i][index_j].nome, nome);
+                    int returnAction = confirmAction();
+                    if (returnAction == 0) {
+                        continue;
+                    }
+
+                    if (returnAction == -1) {
+                        strcpy(pessoas[index_i][index_j].nome, oldNome);
+                        return;
+                    }
+
                     changeTextColor(10);
                     printf("\nNome alterado com suceso!\n");
                     changeTextColor(15);
@@ -563,55 +606,29 @@ void updateInfos() {
                 break;
             case 2:
                 while (true) {
-                    int newMesa = 0;
+                    int oldMesa = pessoas[index_i][index_j].nmr_mesa;
+                    char oldNome[30];
+                    strcpy(oldNome, pessoas[index_i][index_j].nome);
 
-                    printf("%d %d", index_i, index_j);
-                    printf("\n\nDigite o novo número da mesa! \n");
-                    if (scanf("%d", &newMesa) != 1) {
-                        changeTextBold();
-                        printf("Por favor, Digite um número válido! \n");
-                        printf("Número digitado: \n\n", newMesa);
-                        resetText();
-                        system("pause");
-                        while (getchar() != '\n');
+                    if (!updateTable(index_i, index_j, nmr_mesa)) {
                         continue;
                     }
 
-                    pessoas[index_i][index_j].nmr_mesa = 0; // Resetar a mesa antiga
-                    mesas[index_i][index_j] = nmr_mesa;
+                    int returnAction = confirmAction();
 
-                    int cont = 1;
-                    int new_i = 0;
-                    int new_j = 0;
-                    bool hasReserved = false;
-                    for (int i = 0; i < 30; ++i) {
-                        for (int j = 0; j < 30; ++j) {
-                            if (cont == newMesa && mesas[i][j] != 0) {
-                                mesas[i][j] = 0; //marcando a mesa como reservada
-                                hasReserved = true; //alguma mesa foi reservada
-                                changeTextColor(15);
-                                new_i = i;
-                                new_j = j;
-                                break;
-                            }
-                            cont++;
-                        }
-                        if (hasReserved) { break; }
+                    if (returnAction == 0) {
+                        continue;
                     }
 
-                    char nome[30];
+                    if (returnAction == -1) {
+                        strcpy(pessoas[index_i][index_j].nome, oldNome);
+                        pessoas[index_i][index_j].nmr_mesa = oldMesa;
+                        return;
+                    }
 
-                    strcpy(nome, pessoas[index_i][index_j].nome);
-                    pessoas[index_i][index_j].nome[0] = '0';
-                    strcpy(pessoas[new_i][new_j].nome, nome);
-
-                    pessoas[new_i][new_j].nmr_mesa = newMesa;
-                    printf("Número novo: %d\n", pessoas[new_i][new_j].nmr_mesa);
-                    printf("Número antigo: %d\n", mesas[index_i][index_j]);;
                     changeTextColor(10);
-                    printf("\nNúmero da mesa alterado com suceso!\n");
+                    printf("\nNúmero de mesa alterado com suceso!\n");
                     changeTextColor(15);
-
                     break;
                 }
                 break;
@@ -627,20 +644,27 @@ void updateInfos() {
                 }
 
                 while (true) {
-                    int newItem = 0;
-                    showMenu();
-                    if (scanf("%d", &newItem) != 1) {
-                        changeTextBold();
-                        printf("Por favor, Digite um número válido! \n");
-                        printf("Número digitado: \n\n", newItem);
-                        resetText();
-                        system("pause");
-                        while (getchar() != '\n');
+                    int oldItem = 0;
+                    for (int i = 0; i < 5; ++i) {
+                        if (strcmp(pessoas[index_i][index_j].item.nome, itens[i].nome) == 0) {
+                            oldItem = i;
+                        }
+                    }
+                    if (!updateOrder(index_i, index_j)) {
                         continue;
                     }
-                    printf("Pedido antigo: %s\n", pessoas[index_i][index_j].item.nome);
-                    pessoas[index_i][index_j].item = itens[newItem - 1];
-                    printf("Número novo: %s\n", pessoas[index_i][index_j].item.nome);
+
+                    int returnAction = confirmAction();
+
+                    if (returnAction == 0) {
+                        continue;
+                    }
+
+                    if (returnAction == -1) {
+                        pessoas[index_i][index_j].item = itens[oldItem];
+                        return;
+                    }
+
                     changeTextColor(10);
                     printf("\nPedido alterado com suceso!\n");
                     changeTextColor(15);
@@ -649,79 +673,39 @@ void updateInfos() {
                 break;
             case 4:
                 while (true) {
-                    char nome[30];
-                    printf("\n\nDigite o novo nome! \n");
-                    while (getchar() != '\n');
-                    scanf("%[^\n]", nome);
-                    if (!verifyString(nome)) { continue; }
-
-                    strcpy(pessoas[index_i][index_j].nome, nome);
-
-                     int newMesa = 0;
-
-                    printf("%d %d", index_i, index_j);
-                    printf("\n\nDigite o novo número da mesa! \n");
-                    if (scanf("%d", &newMesa) != 1) {
-                        changeTextBold();
-                        printf("Por favor, Digite um número válido! \n");
-                        printf("Número digitado: \n\n", newMesa);
-                        resetText();
-                        system("pause");
-                        while (getchar() != '\n');
-                        continue;
-                    }
-
-                    pessoas[index_i][index_j].nmr_mesa = 0; // Resetar a mesa antiga
-                    mesas[index_i][index_j] = nmr_mesa;
-
-                    int cont = 1;
-                    int new_i = 0;
-                    int new_j = 0;
-                    bool hasReserved = false;
-                    for (int i = 0; i < 30; ++i) {
-                        for (int j = 0; j < 30; ++j) {
-                            if (cont == newMesa && mesas[i][j] != 0) {
-                                mesas[i][j] = 0; //marcando a mesa como reservada
-                                hasReserved = true; //alguma mesa foi reservada
-                                changeTextColor(15);
-                                new_i = i;
-                                new_j = j;
-                                break;
-                            }
-                            cont++;
+                    char oldNome[30];
+                    strcpy(oldNome, pessoas[index_i][index_j].nome);
+                    int oldMesa = pessoas[index_i][index_j].nmr_mesa;
+                    int oldItem = 0;
+                    for (int i = 0; i < 5; ++i) {
+                        if (strcmp(pessoas[index_i][index_j].item.nome, itens[i].nome) == 0) {
+                            oldItem = i;
                         }
-                        if (hasReserved) { break; }
                     }
 
-                    char newNome[30];
+                    if (!updateName(index_i, index_j)) {
+                        continue;
+                    }
+                    if (!updateTable(index_i, index_j, nmr_mesa)) {
+                        continue;
+                    }
+                    if (!updateOrder(index_i, index_j)) {
+                        continue;
+                    }
+                    int returnAction = confirmAction();
 
-                    strcpy(newNome, pessoas[index_i][index_j].nome);
-                    pessoas[index_i][index_j].nome[0] = '0';
-                    strcpy(pessoas[new_i][new_j].nome, newNome);
-
-                    pessoas[new_i][new_j].nmr_mesa = newMesa;
-                    printf("Número novo: %d\n", pessoas[new_i][new_j].nmr_mesa);
-                    printf("Número antigo: %d\n", mesas[index_i][index_j]);;
-                    changeTextColor(10);
-                    printf("\nNúmero da mesa alterado com suceso!\n");
-                    changeTextColor(15);
-
-
-
-                    int newItem = 0;
-                    showMenu();
-
-                    if (scanf("%d", &newItem) != 1) {
-                        changeTextBold();
-                        printf("Por favor, Digite um número válido! \n");
-                        printf("Número digitado: \n\n", newItem);
-                        resetText();
-                        system("pause");
-                        while (getchar() != '\n');
+                    if (returnAction == 0) {
                         continue;
                     }
 
-                    pessoas[new_i][new_j].item = itens[newItem - 1];
+                    if (returnAction == -1) {
+                        strcpy(pessoas[index_i][index_j].nome, oldNome);
+                        pessoas[index_i][index_j].nmr_mesa = oldMesa;
+                        pessoas[index_i][index_j].item = itens[oldItem];
+
+                        return;
+                    }
+
                     changeTextColor(10);
                     printf("\nTodas as informações foram alteradas com suceso!\n");
                     changeTextColor(15);
@@ -827,14 +811,12 @@ void takeOrder() {
             changeTextBold();
             printf("\nVocê selecionou %s.\n", itens[nmr_item_menu - 1].nome);
             resetText();
-
-            printf("Confirme seu pedido, por favor.\n");
-            printf("[1] - Sim\n[2] - Não\n[0] - Sair\n");
-            scanf("%d", &user_choice);
-            if (user_choice == 2) {
-                printf("Por favor, faça seu pedido novamente!\n");
+            int returnAction = confirmAction();
+            if (returnAction == 0) {
                 continue;
-            } else if (user_choice == 0) {
+            } else if (returnAction == -1) {
+                pessoas[index_i][index_j].item.nome[0] = '\0';
+                pessoas[index_i][index_j].item.preco = 0;
                 return;
             }
             break;
@@ -881,4 +863,137 @@ bool verifyString(char str[30]) {
         return false;
     }
     return true;
+}
+
+bool updateName(int index_i, int index_j) {
+    char nome[30];
+    printf("Digite 0 para sair.\n");
+    printf("\n\nDigite o novo nome! \n");
+    while (getchar() != '\n');
+    scanf("%[^\n]", nome);
+
+    if (!verifyString(nome)) { return false; }
+    if (nome[0] == '0') {
+        changeTextBold();
+        printf("Saindo...\n");
+        resetText();
+        system("pause");
+        while (getchar() != '\n');
+        mainMenu();
+    }
+    printf("Nome antigo: %s\n", pessoas[index_i][index_j].nome);
+    printf("Nome novo: %s\n", nome);
+    strcpy(pessoas[index_i][index_j].nome, nome);
+    return true;
+}
+
+bool updateTable(int index_i, int index_j, int nmr_mesa) {
+    int newMesa = 0;
+    printf("Digite 0 para sair.\n");
+    printf("\n\nDigite o novo número da mesa! \n");
+    if (scanf("%d", &newMesa) != 1) {
+        changeTextBold();
+        printf("Por favor, Digite um número válido! \n");
+        printf("Número digitado: \n\n", newMesa);
+        resetText();
+        system("pause");
+        while (getchar() != '\n');
+        return false;
+    }
+    if (newMesa < 0 || newMesa > 900) {
+        changeTextBold();
+        printf("O número da mesa não pode ser menor que 1 ou maior que 900...\n");
+        resetText();
+        system("pause");
+        while (getchar() != '\n');
+        return false;
+    }
+    if (newMesa == 0) {
+        changeTextBold();
+        printf("Saindo...\n");
+        resetText();
+        system("pause");
+        while (getchar() != '\n');
+        mainMenu();
+    }
+    pessoas[index_i][index_j].nmr_mesa = 0; // Resetar a mesa antiga
+    mesas[index_i][index_j] = nmr_mesa;
+
+    int cont = 1;
+    int new_i = 0;
+    int new_j = 0;
+    bool hasReserved = false;
+    for (int i = 0; i < 30; ++i) {
+        for (int j = 0; j < 30; ++j) {
+            if (cont == newMesa && mesas[i][j] != 0) {
+                mesas[i][j] = 0; //marcando a mesa como reservada
+                hasReserved = true; //alguma mesa foi reservada
+                changeTextColor(15);
+                new_i = i;
+                new_j = j;
+                break;
+            }
+            cont++;
+        }
+        if (hasReserved) { break; }
+    }
+
+    char nome[30];
+
+    strcpy(nome, pessoas[index_i][index_j].nome);
+    pessoas[index_i][index_j].nome[0] = '0';
+    strcpy(pessoas[new_i][new_j].nome, nome);
+
+    pessoas[new_i][new_j].nmr_mesa = newMesa;
+    printf("Número novo: %d\n", pessoas[new_i][new_j].nmr_mesa);
+    printf("Número antigo: %d\n", mesas[index_i][index_j]);;
+    changeTextColor(10);
+    printf("\nNúmero da mesa alterado com suceso!\n");
+    changeTextColor(15);
+    return true;
+}
+
+bool updateOrder(int index_i, int index_j) {
+    int newItem = 0;
+    printf("Digite 0 para sair.\n");
+    showMenu();
+    if (scanf("%d", &newItem) != 1) {
+        changeTextBold();
+        printf("Por favor, Digite um número válido! \n");
+        printf("Número digitado: \n\n", newItem);
+        resetText();
+        system("pause");
+        while (getchar() != '\n');
+        return false;
+    }
+    if (newItem == 0) {
+        changeTextBold();
+        printf("Saindo...");
+        resetText();
+        system("pause");
+        while (getchar() != '\n');
+        mainMenu();
+    }
+    printf("Pedido antigo: %s\n", pessoas[index_i][index_j].item.nome);
+    pessoas[index_i][index_j].item = itens[newItem - 1];
+    printf("Número novo: %s\n", pessoas[index_i][index_j].item.nome);
+    changeTextColor(10);
+    printf("\nPedido alterado com suceso!\n");
+    changeTextColor(15);
+    return true;
+}
+
+
+int confirmAction() {
+    int userConfirm;
+    printf("Você deseja confirmar essa ação?.\n");
+    printf("[1] - Sim\n[2] - Não\n[0] - Sair\n");
+    scanf("%d", &userConfirm);
+    if (userConfirm == 2) {
+        printf("Por favor, realize esta ação novamente!\n");
+        return 0;
+    } else if (userConfirm == 0) {
+        return -1;
+    }
+    return 1;
 }
