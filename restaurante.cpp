@@ -1,4 +1,5 @@
 #include <iostream>
+#include <list>
 #include <stdio.h>
 #include <locale.h>
 #include <string.h>
@@ -47,6 +48,8 @@ bool updateOrder(int index_i, int index_j);
 
 int confirmAction();
 
+char* parseString(char str[30]);
+
 //Utilizando Struct - Declaração
 typedef struct {
     char nome[20];
@@ -57,6 +60,8 @@ typedef struct {
     char nome[30];
     int nmr_mesa;
     ItemCardapio item;
+    int *mesasReservadas;
+    std::list<int> listMesasReservadas;
 } Pessoa;
 
 //Declaração de variáveis globais
@@ -232,97 +237,140 @@ void loadTables() {
 //Função pra reservar uma mesa
 void bookTable() {
     listraTela();
-    if (hasTableAvailable()) {
-        printf("Seja bem vindo à reserva de Mesas!\n\n");
-        int user_choose, hasReserved = 0;
-        char nome[50];
-        listAllTables();
-        while (true) {
-            printf("\nDigite 0 para sair: ");
-            printf("\nPor gentileza, digite o seu nome: ");
-            getchar();
-            scanf("%[^\n]", &nome);
+    int contQtdMesas = 0;
+    int index_i = 0, index_j = 0;
 
-            if (verifyString(nome)) {
-                break;
-            }
+    if (!hasTableAvailable()) {
+        changeTextColor(14);
+        printf("Desculpe, não estamos com mesas disponíveis!...\n");
+        changeTextColor(15);
+        return;
+    }
+
+    printf("Seja bem-vindo à reserva de Mesas!\n\n");
+    int qtdMesas = 0;
+    int user_choose;
+    char nome[30];
+    bool indexSetted = false;
+
+    listAllTables();
+
+    // Lê nome do usuário
+    while (true) {
+        printf("\nDigite 0 para sair: ");
+        printf("\nPor gentileza, digite o seu nome: ");
+        scanf(" %[^\n]", nome);
+
+        if (nome[0] == '0') return;
+        strcpy(nome , parseString(nome));
+        if (verifyString(nome)) break;
+    }
+
+    // Lê quantidade de mesas
+    while (true) {
+        printf("\nQuantas mesas você deseja reservar? [MAX: 5 MESAS]: ");
+        if (scanf("%d", &qtdMesas) != 1) {
+            changeTextColor(12);
+            printf("Entrada inválida! Por favor, insira um número inteiro.\n\n");
+            changeTextColor(15);
+            pauseAndClear();
+            while (getchar() != '\n');
+            continue;
         }
 
-        if (nome[0] == '0') {
-            return;
+        if (qtdMesas <= 0 || qtdMesas > 5) {
+            changeTextBold();
+            printf("Por favor, digite a quantidade certa!\n ");
+            resetText();
+            system("pause");
+            while (getchar() != '\n');
+            continue;
+        }
+        break;
+    }
+
+    // Loop de reservas
+    while (contQtdMesas < qtdMesas) {
+        printf("contador: %d\n", contQtdMesas);
+        printf("Por favor, digite o número da mesa que você deseja reservar: ");
+        if (scanf("%d", &user_choose) != 1) {
+            changeTextColor(12);
+            printf("Entrada inválida! Por favor, insira um número inteiro.\n\n");
+            changeTextColor(15);
+            pauseAndClear();
+            while (getchar() != '\n');
+            continue;
         }
 
-        do {
-            while (true) {
-                printf("Por favor, digite o número da mesa que você deseja reservar: ");
-                int valid = scanf("%d", &user_choose);
+        if (user_choose == 0) return;
 
-                if (user_choose == 0) {
-                    return;
-                }
 
-                if (valid != 1) {
-                    changeTextColor(12);
-                    printf("Entrada inválida! Por favor, insira um número inteiro.\n\n");
-                    changeTextColor(15);
-                    pauseAndClear();
-                    while (getchar() != '\n');
-                    continue;
-                }
-                break;
-            }
+        if (user_choose < 0 || user_choose > 900) {
+            changeTextColor(12);
+            printf("Tente novamente...\n");
+            printf("Por favor, insira uma opção válida.\n");
+            printf("Números entre 1 e 900.\n\n");
+            changeTextColor(15);
+            system("pause");
+            while (getchar() != '\n');
+            continue;
+        }
 
-            if (user_choose <= 0 || user_choose > 900) {
-                changeTextColor(12);
-                printf("Tente novamente...\n");
-                printf("Por favor, insira uma opção válida.\n");
-                printf("Números entre 1 e 9.\n\n");
-                changeTextColor(15);
-                system("pause");
-            } else {
-                int cont = 1;
-                for (int i = 0; i < 30; ++i) {
-                    for (int j = 0; j < 30; ++j) {
-                        if (cont == user_choose && mesas[i][j] != 0) {
-                            changeTextColor(10);
-                            printf("\n\nMesa de Numero %d° reservada para %s.\n", mesas[i][j], nome); //texto na tela
+        // Processa reserva
+        int cont = 1;
+        bool mesaReservada = false;
+        for (int i = 0; i < 30; ++i) {
+            for (int j = 0; j < 30; ++j) {
+                if (cont == user_choose) {
+                    if (mesas[i][j] != 0) {
+                        changeTextColor(10);
+                        printf("\nMesa %d reservada com sucesso!\n", user_choose);
+                        mesas[i][j] = 0;
 
-                            strcpy(pessoas[i][j].nome, nome);
-                            pessoas[i][j].nmr_mesa = cont;
-
-                            mesas[i][j] = 0; //marcando a mesa como reservada
-                            hasReserved = 1; //alguma mesa foi reservada
-                            changeTextColor(15);
-
-                            printf("\n");
-                            break;
+                        if (!indexSetted) {
+                            index_i = i;
+                            index_j = j;
+                            indexSetted = true;
                         }
-                        cont++;
-                    }
-                    if (hasReserved == 1) {
+
+                        mesaReservada = true;
+                        contQtdMesas++;
+                        changeTextColor(15);
+                        break;
+                    } else {
+                        mesaReservada = true;
+                        changeTextColor(14);
+                        printf("Mesa de número já reservada!\n");
+                        changeTextColor(15);
                         break;
                     }
                 }
-
-                if (hasReserved == 0) {
-                    changeTextColor(14);
-                    printf("Mesa de número já reservada!\n");
-                    printf("Por favor, tente novamente.\n\n");
-                    changeTextColor(15);
-                }
+                cont++;
             }
-        } while (hasReserved == 0); //se foi resevada, saí do loop e continua o código
-        fflush(stdin);
-    } else {
-        changeTextColor(14);
-        printf("Desculpe, não estamos com mesas disponíveis!...\n");
+            if (mesaReservada) break;
+        }
+        strcpy(pessoas[index_i][index_j].nome, nome);
+        pessoas[index_i][index_j].listMesasReservadas.push_back(user_choose);
+        pessoas[index_i][index_j].nmr_mesa = qtdMesas;
 
-        changeTextColor(15);
+        if (!mesaReservada) {
+            changeTextColor(14);
+            printf("Mesa não encontrada!\n");
+            changeTextColor(15);
+            system("pause");
+        }
+    }
+
+    // Exibe mesas reservadas
+    printf("\nMesas reservadas para %s: ", nome);
+    for (int mesa: pessoas[index_i][index_j].listMesasReservadas) {
+        printf("%d ", mesa);
     }
 
     listraTela();
     printf("\n\n");
 }
+
 
 void listAllTables() {
     listraTela();
@@ -395,13 +443,28 @@ bool listReservedTables() {
         for (int j = 0; j < 30; ++j) {
             if (pessoas[i][j].nmr_mesa != 0 && pessoas[i][j].nome[0] != '0') {
                 changeTextColor(14);
-                printf("| %3d  - %s | ", pessoas[i][j].nmr_mesa, pessoas[i][j].nome);
-
+                if (pessoas[i][j].nmr_mesa == 1) {
+                    std::list<int>::iterator it = pessoas[i][j].listMesasReservadas.begin();
+                    printf("Mesa reservada: %d \n", *it);
+                } else {
+                    printf("Mesas reservadas: ");
+                    printf("[ ");
+                    for (int mesas: pessoas[i][j].listMesasReservadas) {
+                        if (pessoas[i][j].listMesasReservadas.back() == mesas) {
+                            printf(" ");
+                        } else {
+                            printf("%3d, ", mesas);
+                        }
+                    }
+                    printf("]\n");
+                }
+                printf("Nome: %s\n", pessoas[i][j].nome);
                 if (pessoas[i][j].item.preco != 0 && pessoas[i][j].item.nome[0] != '0') {
-                    printf("Item escolhido: %s - R$ %.2f\n", pessoas[i][j].item.nome, pessoas[i][j].item.preco);
+                    printf("Pedido: %s - R$ %.2f\n", pessoas[i][j].item.nome, pessoas[i][j].item.preco);
                 } else {
                     printf("Nenhum pedido!\n");
                 }
+                printf("--------------------------------------\n");
                 breakLine = 1;
             }
         }
@@ -426,67 +489,150 @@ bool verifyReservedTables() {
 
 void deleteOneReserve() {
     listraTela();
-    bool breakInternLoop = false;
     bool breakExternLoop = false;
-    while (!breakExternLoop) {
-        int nmr_mesa = 0;
-        int cont = 1;
-        if (!listReservedTables()) {
-            return;
-        }
-        printf("Digite 0 para sair: \n");
-        printf("Escolha o número da mesa que você deseja tirar a reserva: ");
-        if (scanf("%d", &nmr_mesa) != 1) {
-            changeTextColor(12);
-            printf("Entrada inválida! Por favor, insira um número inteiro.\n\n");
-            changeTextColor(15);
-            system("pause");
-            while (getchar() != '\n');
-            continue;
-        }
-
-        if (nmr_mesa == 0) {
+    int qtdMesas = 0;
+    int contQtdMesas = 0;
+    int index_i = 0, index_j = 0;
+    while (true) {
+        char nome[30];
+        bool findName = false;
+        printf("Digite 0 para sair.\n");
+        printf("Informe o nome que consta na reserva: \n");
+        while (getchar() != '\n');
+        scanf("%[^\n]", nome);
+        printf("nome: %s\n", nome);
+        if (nome[0] == '0') {
             changeTextBold();
             printf("Saindo...");
             resetText();
             return;
         }
-        int returnAction = 0;
+        strcpy(nome , parseString(nome));
+        if (!verifyString(nome)) {
+            continue;
+        }
         for (int i = 0; i < 30; ++i) {
             for (int j = 0; j < 30; ++j) {
-                if (cont == nmr_mesa) {
-                    if (mesas[i][j] == cont) {
-                        changeTextColor(14);
-                        printf("Mesa sem reserva! Tente novamente...!\n");
-                        breakInternLoop = true;
-                        changeTextColor(15);
-                        system("pause");
-                    } else {
-                        returnAction = confirmAction();
-                        if (returnAction == 0) {
-                            breakInternLoop = true;
-                            break;
-                        } else if (returnAction == -1) {
-                            return;
-                        }
-                        changeTextColor(10);
-                        printf("A reservada de número %d foi excluída com sucesso!\n", nmr_mesa);
-                        mesas[i][j] = cont;
-                        strcpy(pessoas[i][j].nome, "0");
-                        pessoas[i][j].nmr_mesa = 0;
-                        breakInternLoop = true;
+                if (strcmp(pessoas[i][j].nome, nome) == 0) {
+                    findName = true;
+                    index_i = i;
+                    index_j = j;
+                    break;
+                }
+            }
+            if (findName) break;
+        }
+        if (!findName) {
+            changeTextBold();
+            printf("\nNome não encontrado!\n");
+            resetText();
+
+            continue;
+        }
+        if (pessoas[index_i][index_j].nmr_mesa == 0) {
+            printf("Essa pessoa não tem mesas reservadas!\n");
+            return;
+        }
+        break;
+    }
+
+    printf("Digite 0 para sair: \n");
+    while (!breakExternLoop) {
+        int nmr_mesa = 0;
+        if (!listReservedTables()) {
+            return;
+        }
+        if (pessoas[index_i][index_j].nmr_mesa == 1) {
+            std::list<int>::iterator it = pessoas[index_i][index_j].listMesasReservadas.begin();
+            printf("Mesa N°%d reservada por %s.\n", *it, pessoas[index_i][index_j].nome);
+
+            int returnConfirm = confirmAction();
+            if (returnConfirm == 0) { continue; }
+            if (returnConfirm == -1) { return; }
+
+            for (int i = 0; i < 30; ++i) {
+                for (int j = 0; j < 30; ++j) {
+                    if (mesas[i][j] == 0) {
+                        mesas[i][j] = *it;
                         breakExternLoop = true;
-                        changeTextColor(15);
+                        break;
                     }
                 }
-                cont++;
+                if (breakExternLoop) break;
             }
-            if (breakInternLoop == true) {
-                break;
+
+            pessoas[index_i][index_j].listMesasReservadas.pop_back();
+            pessoas[index_i][index_j].nmr_mesa = 0;
+            break;
+        }
+        printf("Quantas mesas você deseja remover? ");
+        if (scanf("%d", &qtdMesas) != 1 || qtdMesas <= 0 || qtdMesas > 5) {
+            printf("Entrada inválida! Insira um número válido.\n");
+            while (getchar() != '\n'); // Limpa buffer
+            continue;
+        }
+        if (qtdMesas == 0) {
+            changeTextBold();
+            printf("Saindo...");
+            resetText();
+            return;
+        }
+
+        std::list<int> oldMesas;
+        for (int count = 0; count < qtdMesas; ++count) {
+            printf("Escolha o número da mesa que você deseja tirar a reserva: ");
+            if (scanf("%d", &nmr_mesa) != 1) {
+                changeTextColor(12);
+                printf("Entrada inválida! Por favor, insira um número inteiro.\n\n");
+                changeTextColor(15);
+                system("pause");
+                while (getchar() != '\n');
+                continue;
+            }
+
+            if (nmr_mesa == 0) {
+                changeTextBold();
+                printf("Saindo...");
+                resetText();
+                return;
+            }
+            bool findMesas = false;
+            for (int mesa: pessoas[index_i][index_j].listMesasReservadas) {
+                if (mesa == nmr_mesa) {
+                    pessoas[index_i][index_j].listMesasReservadas.remove(nmr_mesa);
+                    oldMesas.push_back(nmr_mesa);
+                    findMesas = true;
+                    break;
+                }
+            }
+            if (!findMesas) {
+                changeTextBold();
+                printf("Mesa não encontrada!\n ");
+                resetText();
+                system("pause");
+                while (getchar() != '\n');
+                continue;
+            }
+            // Diminui o número de reservas
+            pessoas[index_i][index_j].nmr_mesa--;
+
+            for (int i = 0; i < 30; ++i) {
+                for (int j = 0; j < 30; ++j) {
+                    if (mesas[i][j] == 0) {
+                        mesas[i][j] = nmr_mesa;
+                        breakExternLoop = true;
+                        break;
+                    }
+                }
+                if (breakExternLoop) break;
             }
         }
     }
+    changeTextColor(10);
+    printf("\nMesa(s) excluídas com sucesso!\n");
+    changeTextColor(15);
 }
+
 
 void showMenu() {
     listraTela();
@@ -509,6 +655,41 @@ void updateInfos() {
         printf("\nATUALIZAÇÃO DE INFORMAÇÕES!\n\n ");
         int user_choice = 0;
         int nmr_mesa = 0;
+        char nome_reserva[30];
+
+        printf("\nDigite 0 para sair\n");
+        printf("Informe o nome que consta na reserva para as informações serem atualizadas: \n");
+        while (getchar() != '\n');
+        scanf("%[^\n]", nome_reserva);
+        strcpy(nome_reserva,parseString(nome_reserva));
+        if (!verifyString(nome_reserva)) { continue; }
+
+        if (nome_reserva[0] == '0') {
+            return;
+        }
+        bool find = false;
+        int index_i = 0, index_j = 0;
+
+        for (int i = 0; i < 30; ++i) {
+            for (int j = 0; j < 30; ++j) {
+                if (strcmp(pessoas[i][j].nome, nome_reserva) == 0) {
+                    find = true;
+                    index_i = i;
+                    index_j = j;
+                    break;
+                }
+            }
+            if (find == true) break;
+        }
+
+        if (!find) {
+            changeTextBold();
+            printf("Nome não encontrada! Informe novamente!\n");
+            resetText();
+            system("pause");
+            while (getchar() != '\n');
+            continue;
+        }
 
         printf("\nDigite 0 para sair\n");
         printf("Informe o que você deseja alterar: \n");
@@ -532,52 +713,18 @@ void updateInfos() {
         }
         if (user_choice == 0) { return; }
 
-
-        printf("Escolha o Número da mesa reservada para as informações serem atualizadas: \n");
-        if (scanf("%d", &nmr_mesa) != 1) {
-            changeTextBold();
-            printf("Entrada inválida! Digite apenas números");
-            resetText();
-            system("pause");
-            while (getchar() != '\n');
-            continue;
-        }
-
-        if (nmr_mesa == 0) {
-            return;
-        }
-        bool find = false;
-        int index_i = 0, index_j = 0;
-
-        for (int i = 0; i < 30; ++i) {
-            for (int j = 0; j < 30; ++j) {
-                if (nmr_mesa == pessoas[i][j].nmr_mesa) {
-                    find = true;
-                    index_i = i;
-                    index_j = j;
-                    break;
-                }
-            }
-            if (find == true) break;
-        }
-
-        if (!find) {
-            changeTextBold();
-            printf("Mesa não encontrada! Informe novamente!\n");
-            resetText();
-            system("pause");
-            while (getchar() != '\n');
-            continue;
-        }
         char textItemOrder[30];
         strcpy(textItemOrder, pessoas[index_i][index_j].item.nome[0] == '0'
                                   ? "Nenhum Pedido"
                                   : pessoas[index_i][index_j].item.nome);
         changeTextColor(14);
-        printf("\n\nInformações atuais:\n[mesa] - [nome] - [pedido]\n");
-        printf("%d - %s - %s\n", pessoas[index_i][index_j].nmr_mesa,
-               pessoas[index_i][index_j].nome, textItemOrder
-        );
+        printf("\n\nInformações atuais:\n\n");
+        printf("Nome: %s\n", pessoas[index_i][index_j].nome);
+        printf("Mesa(s) Reservada(s): ");
+        for (int mesa: pessoas[index_i][index_j].listMesasReservadas) {
+            printf(" %d ", mesa);
+        }
+        printf("\nPedido(s): %s\n", textItemOrder);
         resetText();
         switch (user_choice) {
             case 1:
@@ -606,9 +753,13 @@ void updateInfos() {
                 break;
             case 2:
                 while (true) {
-                    int oldMesa = pessoas[index_i][index_j].nmr_mesa;
-                    char oldNome[30];
-                    strcpy(oldNome, pessoas[index_i][index_j].nome);
+                    std::list<int> oldMesas = pessoas[index_i][index_j].listMesasReservadas;
+                    int oldMesasVector[30][30];
+                    for (int i = 0; i < 30; i++) {
+                        for (int j = 0; j < 30; j++) {
+                            oldMesasVector[i][j] = mesas[i][j];
+                        }
+                    }
 
                     if (!updateTable(index_i, index_j, nmr_mesa)) {
                         continue;
@@ -616,14 +767,20 @@ void updateInfos() {
 
                     int returnAction = confirmAction();
 
-                    if (returnAction == 0) {
-                        continue;
-                    }
+                    if (returnAction == 0 || returnAction == -1) {
+                        pessoas[index_i][index_j].listMesasReservadas = oldMesas;
 
-                    if (returnAction == -1) {
-                        strcpy(pessoas[index_i][index_j].nome, oldNome);
-                        pessoas[index_i][index_j].nmr_mesa = oldMesa;
-                        return;
+                        for (int i = 0; i < 30; i++) {
+                            for (int j = 0; j < 30; j++) {
+                                mesas[i][j] = oldMesasVector[i][j];
+                            }
+                        }
+
+                        changeTextColor(14);
+                        printf("Alteração cancelada. Estado anterior restaurado.\n");
+                        changeTextColor(15);
+
+                        continue;
                     }
 
                     changeTextColor(10);
@@ -828,6 +985,211 @@ void takeOrder() {
     }
 }
 
+bool updateName(int index_i, int index_j) {
+    char nome[30];
+    printf("Digite 0 para sair.\n");
+    printf("\n\nDigite o novo nome! \n");
+    while (getchar() != '\n');
+    scanf("%[^\n]", nome);
+
+    if (!verifyString(nome)) { return false; }
+    if (nome[0] == '0') {
+        changeTextBold();
+        printf("Saindo...\n");
+        resetText();
+        system("pause");
+        while (getchar() != '\n');
+        mainMenu();
+    }
+    printf("Nome antigo: %s\n", pessoas[index_i][index_j].nome);
+    printf("Nome novo: %s\n", nome);
+    strcpy(pessoas[index_i][index_j].nome, nome);
+    return true;
+}
+
+bool updateTable(int index_i, int index_j, int nmr_mesa) {
+    int newMesa = 0;
+    int oldMesa = 0;
+    int qtdMesas = 0;
+    std::list<int> listMesasReservadas = pessoas[index_i][index_j].listMesasReservadas;
+    printf("Mesas reservadas: \n");
+    printf("[ ");
+    for (int mesaIt: listMesasReservadas) {
+        if (listMesasReservadas.back() == mesaIt) { printf("%d ", mesaIt); } else { printf("%d, ", mesaIt); }
+    }
+    printf("]\n");
+    printf("\nDigite 0 para sair.\n");
+    printf("Digite quantas mesas você quer atualizar: [MAX: 5]\n");
+    if (scanf("%d", &qtdMesas) != 1 || qtdMesas < 0 || qtdMesas > 5) {
+        changeTextBold();
+        printf("Entrada inválida! Digite o número corretamente!\n");
+        printf("De 1 - 5 mesas!\n");
+        resetText();
+        return false;
+    }
+    for (int i = 0; i < qtdMesas; i++) {
+        printf("\n\nDigite o número antigo da mesa! \n");
+        if (scanf("%d", &oldMesa) != 1) {
+            changeTextBold();
+            printf("Por favor, Digite um número válido! \n");
+            printf("Número digitado: \n\n", oldMesa);
+            resetText();
+            system("pause");
+            while (getchar() != '\n');
+            return false;
+        }
+        if (oldMesa < 0 || oldMesa > 900) {
+            changeTextBold();
+            printf("O número da mesa não pode ser menor que 1 ou maior que 900...\n");
+            resetText();
+            system("pause");
+            while (getchar() != '\n');
+            i--;
+            continue;
+        }
+        if (oldMesa == 0) {
+            changeTextBold();
+            printf("Saindo...\n");
+            resetText();
+            system("pause");
+            while (getchar() != '\n');
+            mainMenu();
+        }
+        int contOldMesa = 1;
+        bool findOldMesa = false;
+        printf("OLHA TO FORA DO IF: %d\n", findOldMesa);
+
+        for (int i = 0; i < 30; i++) {
+            for (int j = 0; j < 30; j++) {
+                if (contOldMesa == oldMesa) {
+                    mesas[i][j] = oldMesa;
+                    findOldMesa = true;
+                    break;
+                }
+                contOldMesa++;
+            }
+            if (findOldMesa) break;
+        }
+        if (!findOldMesa) {
+            changeTextBold();
+            printf("Mesa não encontrada.\nTente novamente.\n");
+            resetText();
+            i--;
+            continue;
+        }
+
+        printf("\n\nDigite o novo número da mesa! \n");
+        if (scanf("%d", &newMesa) != 1) {
+            changeTextBold();
+            printf("Por favor, Digite um número válido! \n");
+            printf("Número digitado: \n\n", newMesa);
+            resetText();
+            system("pause");
+            while (getchar() != '\n');
+            i--;
+            continue;
+        }
+        if (newMesa < 0 || newMesa > 900) {
+            changeTextBold();
+            printf("O número da mesa não pode ser menor que 1 ou maior que 900...\n");
+            resetText();
+            system("pause");
+            while (getchar() != '\n');
+            i--;
+            continue;
+        }
+        if (newMesa == 0) {
+            changeTextBold();
+            printf("Saindo...\n");
+            resetText();
+            system("pause");
+            while (getchar() != '\n');
+            mainMenu();
+        }
+
+
+        int cont = 1;
+
+        bool hasReserved = false;
+        for (int i = 0; i < 30; ++i) {
+            for (int j = 0; j < 30; ++j) {
+                if (cont == newMesa && mesas[i][j] != 0) {
+                    mesas[i][j] = 0;
+                    hasReserved = true;
+                    changeTextColor(15);
+                    break;
+                }
+                cont++;
+            }
+            if (hasReserved) { break; }
+        }
+        int cont_newMesa = 1;
+        for (auto it = listMesasReservadas.begin();
+             it != listMesasReservadas.end(); ++it) {
+            if (*it == oldMesa) {
+                *it = newMesa;
+                break;
+            }
+            cont_newMesa++;
+        }
+
+        for (int list_mesas_reservada: listMesasReservadas) {
+            printf("\nmesas: %d \n", list_mesas_reservada);
+        }
+        pessoas[index_i][index_j].listMesasReservadas = listMesasReservadas;
+        auto it = pessoas[index_i][index_j].listMesasReservadas.begin();
+        std::advance(it, cont);
+        printf("Número novo: %d\n", *it);
+    }
+    return true;
+}
+
+bool updateOrder(int index_i, int index_j) {
+    int newItem = 0;
+    printf("Digite 0 para sair.\n");
+    showMenu();
+    if (scanf("%d", &newItem) != 1) {
+        changeTextBold();
+        printf("Por favor, Digite um número válido! \n");
+        printf("Número digitado: \n\n", newItem);
+        resetText();
+        system("pause");
+        while (getchar() != '\n');
+        return false;
+    }
+    if (newItem == 0) {
+        changeTextBold();
+        printf("Saindo...");
+        resetText();
+        system("pause");
+        while (getchar() != '\n');
+        mainMenu();
+    }
+    printf("Pedido antigo: %s\n", pessoas[index_i][index_j].item.nome);
+    pessoas[index_i][index_j].item = itens[newItem - 1];
+    printf("Número novo: %s\n", pessoas[index_i][index_j].item.nome);
+    changeTextColor(10);
+    printf("\nPedido alterado com suceso!\n");
+    changeTextColor(15);
+    return true;
+}
+
+char* parseString(char str[30]) {
+    int countString;
+    bool hasSpace = true;
+    for (countString = 0; str[countString] != '\0'; ++countString) {
+        if (isspace(str[countString])) {
+            hasSpace = true;
+        }else if (hasSpace) {
+            str[countString] = toupper(str[countString]);
+            hasSpace = false;
+        }else {
+            str[countString] = tolower(str[countString]);
+        }
+    }
+    return str;
+}
+
 
 bool verifyString(char str[30]) {
     bool hasNumber = false, hasSpace = true;
@@ -862,124 +1224,6 @@ bool verifyString(char str[30]) {
         changeTextColor(15);
         return false;
     }
-    return true;
-}
-
-bool updateName(int index_i, int index_j) {
-    char nome[30];
-    printf("Digite 0 para sair.\n");
-    printf("\n\nDigite o novo nome! \n");
-    while (getchar() != '\n');
-    scanf("%[^\n]", nome);
-
-    if (!verifyString(nome)) { return false; }
-    if (nome[0] == '0') {
-        changeTextBold();
-        printf("Saindo...\n");
-        resetText();
-        system("pause");
-        while (getchar() != '\n');
-        mainMenu();
-    }
-    printf("Nome antigo: %s\n", pessoas[index_i][index_j].nome);
-    printf("Nome novo: %s\n", nome);
-    strcpy(pessoas[index_i][index_j].nome, nome);
-    return true;
-}
-
-bool updateTable(int index_i, int index_j, int nmr_mesa) {
-    int newMesa = 0;
-    printf("Digite 0 para sair.\n");
-    printf("\n\nDigite o novo número da mesa! \n");
-    if (scanf("%d", &newMesa) != 1) {
-        changeTextBold();
-        printf("Por favor, Digite um número válido! \n");
-        printf("Número digitado: \n\n", newMesa);
-        resetText();
-        system("pause");
-        while (getchar() != '\n');
-        return false;
-    }
-    if (newMesa < 0 || newMesa > 900) {
-        changeTextBold();
-        printf("O número da mesa não pode ser menor que 1 ou maior que 900...\n");
-        resetText();
-        system("pause");
-        while (getchar() != '\n');
-        return false;
-    }
-    if (newMesa == 0) {
-        changeTextBold();
-        printf("Saindo...\n");
-        resetText();
-        system("pause");
-        while (getchar() != '\n');
-        mainMenu();
-    }
-    pessoas[index_i][index_j].nmr_mesa = 0; // Resetar a mesa antiga
-    mesas[index_i][index_j] = nmr_mesa;
-
-    int cont = 1;
-    int new_i = 0;
-    int new_j = 0;
-    bool hasReserved = false;
-    for (int i = 0; i < 30; ++i) {
-        for (int j = 0; j < 30; ++j) {
-            if (cont == newMesa && mesas[i][j] != 0) {
-                mesas[i][j] = 0; //marcando a mesa como reservada
-                hasReserved = true; //alguma mesa foi reservada
-                changeTextColor(15);
-                new_i = i;
-                new_j = j;
-                break;
-            }
-            cont++;
-        }
-        if (hasReserved) { break; }
-    }
-
-    char nome[30];
-
-    strcpy(nome, pessoas[index_i][index_j].nome);
-    pessoas[index_i][index_j].nome[0] = '0';
-    strcpy(pessoas[new_i][new_j].nome, nome);
-
-    pessoas[new_i][new_j].nmr_mesa = newMesa;
-    printf("Número novo: %d\n", pessoas[new_i][new_j].nmr_mesa);
-    printf("Número antigo: %d\n", mesas[index_i][index_j]);;
-    changeTextColor(10);
-    printf("\nNúmero da mesa alterado com suceso!\n");
-    changeTextColor(15);
-    return true;
-}
-
-bool updateOrder(int index_i, int index_j) {
-    int newItem = 0;
-    printf("Digite 0 para sair.\n");
-    showMenu();
-    if (scanf("%d", &newItem) != 1) {
-        changeTextBold();
-        printf("Por favor, Digite um número válido! \n");
-        printf("Número digitado: \n\n", newItem);
-        resetText();
-        system("pause");
-        while (getchar() != '\n');
-        return false;
-    }
-    if (newItem == 0) {
-        changeTextBold();
-        printf("Saindo...");
-        resetText();
-        system("pause");
-        while (getchar() != '\n');
-        mainMenu();
-    }
-    printf("Pedido antigo: %s\n", pessoas[index_i][index_j].item.nome);
-    pessoas[index_i][index_j].item = itens[newItem - 1];
-    printf("Número novo: %s\n", pessoas[index_i][index_j].item.nome);
-    changeTextColor(10);
-    printf("\nPedido alterado com suceso!\n");
-    changeTextColor(15);
     return true;
 }
 
