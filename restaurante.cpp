@@ -2,6 +2,7 @@
 #include <list>
 #include <stdio.h>
 #include <locale.h>
+#include <map>
 #include <string.h>
 #include <windows.h>
 
@@ -48,7 +49,9 @@ bool updateOrder(int index_i, int index_j);
 
 int confirmAction();
 
-char* parseString(char str[30]);
+char *parseString(char str[30]);
+
+bool findName(char name[30]);
 
 //Utilizando Struct - Declaração
 typedef struct {
@@ -59,9 +62,9 @@ typedef struct {
 typedef struct {
     char nome[30];
     int nmr_mesa;
-    ItemCardapio item;
     int *mesasReservadas;
     std::list<int> listMesasReservadas;
+    std::list<ItemCardapio> listItems;
 } Pessoa;
 
 //Declaração de variáveis globais
@@ -223,8 +226,7 @@ void loadTables() {
         for (int j = 0; j < 30; ++j) {
             pessoas[i][j].nome[0] = '0';
             pessoas[i][j].nmr_mesa = 0;
-            pessoas[i][j].item.nome[0] = '0';
-            pessoas[i][j].item.preco = 0;
+            pessoas[i][j].listMesasReservadas.clear();
         }
     }
     itens[0] = (ItemCardapio){"Hamburguer", 15.90};
@@ -262,7 +264,13 @@ void bookTable() {
         scanf(" %[^\n]", nome);
 
         if (nome[0] == '0') return;
-        strcpy(nome , parseString(nome));
+        strcpy(nome, parseString(nome));
+        if (findName(nome)) {
+            changeTextBold();
+            printf("Esse nome %s já possui reserva!\n", nome);
+            resetText();
+            continue;
+        }
         if (verifyString(nome)) break;
     }
 
@@ -318,6 +326,7 @@ void bookTable() {
 
         // Processa reserva
         int cont = 1;
+        bool novaReserva = false;
         bool mesaReservada = false;
         for (int i = 0; i < 30; ++i) {
             for (int j = 0; j < 30; ++j) {
@@ -333,27 +342,30 @@ void bookTable() {
                             indexSetted = true;
                         }
 
-                        mesaReservada = true;
+                        novaReserva = true;
                         contQtdMesas++;
                         changeTextColor(15);
                         break;
                     } else {
                         mesaReservada = true;
                         changeTextColor(14);
-                        printf("Mesa de número já reservada!\n");
+                        printf("Mesa de número %d já reservada!\n", user_choose);
                         changeTextColor(15);
                         break;
                     }
                 }
                 cont++;
             }
-            if (mesaReservada) break;
+            if (novaReserva || mesaReservada) break;
+        }
+        if (mesaReservada) {
+            continue;
         }
         strcpy(pessoas[index_i][index_j].nome, nome);
         pessoas[index_i][index_j].listMesasReservadas.push_back(user_choose);
         pessoas[index_i][index_j].nmr_mesa = qtdMesas;
 
-        if (!mesaReservada) {
+        if (!novaReserva) {
             changeTextColor(14);
             printf("Mesa não encontrada!\n");
             changeTextColor(15);
@@ -448,10 +460,10 @@ bool listReservedTables() {
                     printf("Mesa reservada: %d \n", *it);
                 } else {
                     printf("Mesas reservadas: ");
-                    printf("[ ");
+                    printf("[");
                     for (int mesas: pessoas[i][j].listMesasReservadas) {
                         if (pessoas[i][j].listMesasReservadas.back() == mesas) {
-                            printf(" ");
+                            printf("%3d ", mesas);
                         } else {
                             printf("%3d, ", mesas);
                         }
@@ -459,8 +471,28 @@ bool listReservedTables() {
                     printf("]\n");
                 }
                 printf("Nome: %s\n", pessoas[i][j].nome);
-                if (pessoas[i][j].item.preco != 0 && pessoas[i][j].item.nome[0] != '0') {
-                    printf("Pedido: %s - R$ %.2f\n", pessoas[i][j].item.nome, pessoas[i][j].item.preco);
+                if (pessoas[i][j].listItems.size() == 1) {
+                    std::list<ItemCardapio>::iterator it = pessoas[i][j].listItems.begin();
+                    printf("Pedido: %s - R$ %.2f\n", it->nome, it->preco);
+                } else if (pessoas[i][j].listItems.size() > 1) {
+                    printf("Itens pedidos: [");
+
+                    std::map<std::string, std::pair<float, int> > itemCount;
+
+                    for (auto &item: pessoas[i][j].listItems) {
+                        itemCount[item.nome].first = item.preco; // salva o preço
+                        itemCount[item.nome].second++; // conta quantas vezes apareceu
+                    }
+
+                    int printed = 0;
+                    for (auto &pair: itemCount) {
+                        printf("(%d) %s - R$ %.2f", pair.second.second, pair.first.c_str(), pair.second.first);
+                        printed++;
+                        if (printed < itemCount.size()) {
+                            printf(", ");
+                        }
+                    }
+                    printf("]\n");
                 } else {
                     printf("Nenhum pedido!\n");
                 }
@@ -491,7 +523,6 @@ void deleteOneReserve() {
     listraTela();
     bool breakExternLoop = false;
     int qtdMesas = 0;
-    int contQtdMesas = 0;
     int index_i = 0, index_j = 0;
     while (true) {
         char nome[30];
@@ -507,10 +538,11 @@ void deleteOneReserve() {
             resetText();
             return;
         }
-        strcpy(nome , parseString(nome));
+        strcpy(nome, parseString(nome));
         if (!verifyString(nome)) {
             continue;
         }
+        printf("Nome inserido: %s", nome);
         for (int i = 0; i < 30; ++i) {
             for (int j = 0; j < 30; ++j) {
                 if (strcmp(pessoas[i][j].nome, nome) == 0) {
@@ -661,7 +693,7 @@ void updateInfos() {
         printf("Informe o nome que consta na reserva para as informações serem atualizadas: \n");
         while (getchar() != '\n');
         scanf("%[^\n]", nome_reserva);
-        strcpy(nome_reserva,parseString(nome_reserva));
+        strcpy(nome_reserva, parseString(nome_reserva));
         if (!verifyString(nome_reserva)) { continue; }
 
         if (nome_reserva[0] == '0') {
@@ -713,10 +745,7 @@ void updateInfos() {
         }
         if (user_choice == 0) { return; }
 
-        char textItemOrder[30];
-        strcpy(textItemOrder, pessoas[index_i][index_j].item.nome[0] == '0'
-                                  ? "Nenhum Pedido"
-                                  : pessoas[index_i][index_j].item.nome);
+
         changeTextColor(14);
         printf("\n\nInformações atuais:\n\n");
         printf("Nome: %s\n", pessoas[index_i][index_j].nome);
@@ -724,7 +753,7 @@ void updateInfos() {
         for (int mesa: pessoas[index_i][index_j].listMesasReservadas) {
             printf(" %d ", mesa);
         }
-        printf("\nPedido(s): %s\n", textItemOrder);
+        printf("\n");
         resetText();
         switch (user_choice) {
             case 1:
@@ -790,8 +819,8 @@ void updateInfos() {
                 }
                 break;
             case 3:
-                if (pessoas[index_i][index_j].item.nome[0] == '0' &&
-                    pessoas[index_i][index_j].item.preco == 0) {
+                if (pessoas[index_i][index_j].listMesasReservadas.size() == 0 ||
+                    pessoas[index_i][index_j].listMesasReservadas.empty()) {
                     changeTextBold();
                     printf("Nenhum pedido ainda realizado para ser alterado!");
                     system("pause");
@@ -801,12 +830,8 @@ void updateInfos() {
                 }
 
                 while (true) {
-                    int oldItem = 0;
-                    for (int i = 0; i < 5; ++i) {
-                        if (strcmp(pessoas[index_i][index_j].item.nome, itens[i].nome) == 0) {
-                            oldItem = i;
-                        }
-                    }
+                    std::list<ItemCardapio> oldItens = pessoas[index_i][index_j].listItems;
+
                     if (!updateOrder(index_i, index_j)) {
                         continue;
                     }
@@ -818,7 +843,7 @@ void updateInfos() {
                     }
 
                     if (returnAction == -1) {
-                        pessoas[index_i][index_j].item = itens[oldItem];
+                        pessoas[index_i][index_j].listItems = oldItens;
                         return;
                     }
 
@@ -833,12 +858,7 @@ void updateInfos() {
                     char oldNome[30];
                     strcpy(oldNome, pessoas[index_i][index_j].nome);
                     int oldMesa = pessoas[index_i][index_j].nmr_mesa;
-                    int oldItem = 0;
-                    for (int i = 0; i < 5; ++i) {
-                        if (strcmp(pessoas[index_i][index_j].item.nome, itens[i].nome) == 0) {
-                            oldItem = i;
-                        }
-                    }
+                    std::list<ItemCardapio> oldItens = pessoas[index_i][index_j].listItems;
 
                     if (!updateName(index_i, index_j)) {
                         continue;
@@ -858,8 +878,7 @@ void updateInfos() {
                     if (returnAction == -1) {
                         strcpy(pessoas[index_i][index_j].nome, oldNome);
                         pessoas[index_i][index_j].nmr_mesa = oldMesa;
-                        pessoas[index_i][index_j].item = itens[oldItem];
-
+                        pessoas[index_i][index_j].listItems = oldItens;
                         return;
                     }
 
@@ -896,7 +915,7 @@ void takeOrder() {
         printf("Por favor, insira seu nome que foi registrado na reserva: ");
         while (getchar() != '\n');
         scanf("%[^\n]", nome);
-
+        strcpy(nome, parseString(nome));
         //chama função parar verificar se a String 'nome' contém números e/ou se ela está vazia
         if (!verifyString(nome)) {
             continue;
@@ -935,11 +954,16 @@ void takeOrder() {
         }
 
         //validação para escolha do usuário
+        int qtdItens = 0;
+        bool isEmpty = true;
+        std::list<ItemCardapio> oldList;
         while (true) {
-            int user_choice = 0;
-
             //mostra o cardápio
             showMenu();
+            if (pessoas[index_i][index_j].listItems.size() != 0) {
+                oldList = pessoas[index_i][index_j].listItems;
+                isEmpty = false;
+            }
 
             //verifica se o usuário digitou um número inteiro
             if (scanf("%d", &nmr_item_menu) != 1) {
@@ -963,17 +987,36 @@ void takeOrder() {
                 return;
             }
 
-            pessoas[index_i][index_j].item = itens[nmr_item_menu - 1];
+            pessoas[index_i][index_j].listItems.push_back(itens[nmr_item_menu - 1]);
 
             changeTextBold();
             printf("\nVocê selecionou %s.\n", itens[nmr_item_menu - 1].nome);
             resetText();
+
+            int moreItens = 0;
+            printf("Você deseja adicionar mais alguma coisa?\n");
+            printf("[1] - Sim\n[2] - Não\n");
+            scanf("%d", &moreItens);
+
+            if (moreItens == 1) {
+                qtdItens++;
+                continue;
+            }
+
             int returnAction = confirmAction();
             if (returnAction == 0) {
+                if (isEmpty) {
+                    pessoas[index_i][index_j].listItems.clear();
+                } else {
+                    pessoas[index_i][index_j].listItems = oldList;
+                }
                 continue;
             } else if (returnAction == -1) {
-                pessoas[index_i][index_j].item.nome[0] = '\0';
-                pessoas[index_i][index_j].item.preco = 0;
+                if (isEmpty) {
+                    pessoas[index_i][index_j].listItems.clear();
+                } else {
+                    pessoas[index_i][index_j].listItems = oldList;
+                }
                 return;
             }
             break;
@@ -991,7 +1034,7 @@ bool updateName(int index_i, int index_j) {
     printf("\n\nDigite o novo nome! \n");
     while (getchar() != '\n');
     scanf("%[^\n]", nome);
-
+    strcmp(nome, parseString(nome));
     if (!verifyString(nome)) { return false; }
     if (nome[0] == '0') {
         changeTextBold();
@@ -1145,18 +1188,30 @@ bool updateTable(int index_i, int index_j, int nmr_mesa) {
 }
 
 bool updateOrder(int index_i, int index_j) {
+    int itemEscolhido;
     int newItem = 0;
-    printf("Digite 0 para sair.\n");
-    showMenu();
-    if (scanf("%d", &newItem) != 1) {
-        changeTextBold();
-        printf("Por favor, Digite um número válido! \n");
-        printf("Número digitado: \n\n", newItem);
-        resetText();
-        system("pause");
+
+    printf("Itens pedidos atualmente:\n");
+    int pos = 1;
+    for (auto &item: pessoas[index_i][index_j].listItems) {
+        printf("%d) %s - R$ %.2f\n", pos++, item.nome, item.preco);
+    }
+
+    printf("\nDigite o número do item que deseja alterar (0 para sair): ");
+    if (scanf("%d", &itemEscolhido) != 1 || itemEscolhido <= 0 || itemEscolhido > pessoas[index_i][index_j].listItems.size()) {
+        printf("Entrada inválida.\n");
         while (getchar() != '\n');
         return false;
     }
+    showMenu();
+
+    printf("Digite o número do novo item: ");
+    if (scanf("%d", &newItem) != 1 || newItem < 0 || newItem > 5) {
+        printf("Item inválido.\n");
+        while (getchar() != '\n');
+        return false;
+    }
+
     if (newItem == 0) {
         changeTextBold();
         printf("Saindo...");
@@ -1165,25 +1220,42 @@ bool updateOrder(int index_i, int index_j) {
         while (getchar() != '\n');
         mainMenu();
     }
-    printf("Pedido antigo: %s\n", pessoas[index_i][index_j].item.nome);
-    pessoas[index_i][index_j].item = itens[newItem - 1];
-    printf("Número novo: %s\n", pessoas[index_i][index_j].item.nome);
+    auto it = pessoas[index_i][index_j].listItems.begin();
+    std::advance(it, itemEscolhido - 1);
+    printf("Item antigo: %s\n", it->nome);
+    *it = itens[newItem - 1];
+    printf("Item novo: %s\n", it->nome);
+
     changeTextColor(10);
-    printf("\nPedido alterado com suceso!\n");
+    printf("\nPedido atualizado com sucesso!\n");
     changeTextColor(15);
     return true;
 }
 
-char* parseString(char str[30]) {
+bool findName(char str[30]) {
+    bool findName = false;
+    for (int i = 0; i < 30; ++i) {
+        for (int j = 0; j < 30; ++j) {
+            if (strcmp(pessoas[i][j].nome, str) == 0) {
+                findName = true;
+                break;
+            }
+        }
+        if (findName) break;
+    }
+    return findName;
+}
+
+char *parseString(char str[30]) {
     int countString;
     bool hasSpace = true;
     for (countString = 0; str[countString] != '\0'; ++countString) {
         if (isspace(str[countString])) {
             hasSpace = true;
-        }else if (hasSpace) {
+        } else if (hasSpace) {
             str[countString] = toupper(str[countString]);
             hasSpace = false;
-        }else {
+        } else {
             str[countString] = tolower(str[countString]);
         }
     }
