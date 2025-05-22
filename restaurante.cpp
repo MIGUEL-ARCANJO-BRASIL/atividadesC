@@ -62,7 +62,6 @@ typedef struct {
 typedef struct {
     char nome[30];
     int nmr_mesa;
-    int *mesasReservadas;
     std::list<int> listMesasReservadas;
     std::list<ItemCardapio> listItems;
 } Pessoa;
@@ -217,6 +216,7 @@ int hasTableAvailable() {
             };
         }
     }
+
     //Se 'cont' for incrementado até chegar na ultima mesa, quer dizer que todas foram preenchidas
     return cont == 900 ? 0 : 1;
 }
@@ -308,7 +308,6 @@ void bookTable() {
 
     // Loop de reservas
     while (contQtdMesas < qtdMesas) {
-        printf("contador: %d\n", contQtdMesas);
         printf("Por favor, digite o número da mesa que você deseja reservar: ");
         if (scanf("%d", &user_choose) != 1) {
             changeTextColor(12);
@@ -339,12 +338,16 @@ void bookTable() {
         bool mesaReservada = false;
         for (int i = 0; i < 30; ++i) {
             for (int j = 0; j < 30; ++j) {
+                //SE O CONTADOR FOR IGUAL AO NUMERO INSERIDO PELO USUARIO
                 if (cont == user_choose) {
+                    //SE A MESA NAO TENHA SIDO RESERVADA
                     if (mesas[i][j] != 0) {
                         changeTextColor(10);
                         printf("\nMesa %d reservada com sucesso!\n", user_choose);
                         mesas[i][j] = 0;
 
+                        //VAI SETAR O INDEX DA MATRIZ, ONDEX FOI RESERVADO PELA PRIMEIRA VEZ ( COMO SE FOSSE UM ID
+                        //CASO RESERVE MAIS DE UMA MESA, VAI PEGAR O INDEX DA PRIMEIRA VEZ QUE FOI RESERVDA
                         if (!indexSetted) {
                             index_i = i;
                             index_j = j;
@@ -371,6 +374,7 @@ void bookTable() {
             continue;
         }
         strcpy(pessoas[index_i][index_j].nome, nome);
+        //PUSHBACK, ADICIONA O ELEMENTO NO FINAL DA LISTA
         pessoas[index_i][index_j].listMesasReservadas.push_back(user_choose);
         pessoas[index_i][index_j].nmr_mesa = qtdMesas;
 
@@ -399,7 +403,12 @@ void listAllTables() {
     int cont = 0;
     for (int i = 0; i < 30; ++i) {
         for (int j = 0; j < 30; ++j) {
+
+            //TODA VEZ QUE CHEGA EM 15, VAI COLOCAR COLCHETES
+
             printf(cont % 15 == 0 ? "[" : "");
+
+            // ==0, JÁ FOI RESERVADA
             if (mesas[i][j] == 0) {
                 changeTextColor(12);
                 printf("| [-] ");
@@ -489,8 +498,10 @@ bool listReservedTables() {
                     std::map<std::string, std::pair<float, int> > itemCount;
 
                     for (auto &item: pessoas[i][j].listItems) {
-                        itemCount[item.nome].first = item.preco; // salva o preço
-                        itemCount[item.nome].second++; // conta quantas vezes apareceu
+                        // salva o preço
+                        itemCount[item.nome].first = item.preco;
+                        // conta quantas vezes apareceu
+                        itemCount[item.nome].second++;
                     }
 
                     int printed = 0;
@@ -520,8 +531,10 @@ bool listReservedTables() {
 bool verifyReservedTables() {
     for (int i = 0; i < 30; ++i) {
         for (int j = 0; j < 30; ++j) {
+            //NÚMERO DE MESAS NAO FOR 0 E JÁ TIVER RESERVA
             if (pessoas[i][j].nmr_mesa != 0 && pessoas[i][j].nome[0] != '0') {
-                return true; // Existe pelo menos uma reserva
+                // Existe pelo menos uma reserva
+                return true;
             }
         }
     }
@@ -537,6 +550,7 @@ void deleteOneReserve() {
     bool breakExternLoop = false;
     int qtdMesas = 0;
     int index_i = 0, index_j = 0;
+
     while (true) {
         char nome[30];
         printf("Digite 0 para sair.\n");
@@ -544,16 +558,19 @@ void deleteOneReserve() {
         while (getchar() != '\n');
         scanf("%[^\n]", nome);
         printf("nome: %s\n", nome);
+
         if (nome[0] == '0') {
             changeTextBold();
             printf("Saindo...");
             resetText();
             return;
         }
+
         strcpy(nome, parseString(nome));
         if (!verifyString(nome)) {
             continue;
         }
+
         printf("Nome inserido: %s", nome);
         if (!findName(nome)) {
             changeTextBold();
@@ -576,6 +593,8 @@ void deleteOneReserve() {
         if (!listReservedTables()) {
             return;
         }
+
+        //TIRAR RESERVA QUANDO SE TEM APENAS 1 MESA
         if (pessoas[index_i][index_j].listMesasReservadas.size() == 1) {
             std::list<int>::iterator it = pessoas[index_i][index_j].listMesasReservadas.begin();
             printf("Mesa N°%d reservada por %s.\n", *it, pessoas[index_i][index_j].nome);
@@ -584,6 +603,8 @@ void deleteOneReserve() {
             if (returnConfirm == 0) { continue; }
             if (returnConfirm == -1) { return; }
             int cont = 1;
+
+            //FOR EACH PRA ACHAR UM ELEMENTO, E DPS TIRAR A RESERVA
             for (int i = 0; i < 30; ++i) {
                 for (int j = 0; j < 30; ++j) {
                     if (cont == *it) {
@@ -596,15 +617,17 @@ void deleteOneReserve() {
                 if (breakExternLoop) break;
             }
 
+            //TIRANDO O ELEMNTO DA LISTA (NO FINAL DA LISTA
             pessoas[index_i][index_j].listMesasReservadas.pop_back();
             pessoas[index_i][index_j].nmr_mesa = 0;
 
             break;
         }
+
         printf("Quantas mesas você deseja remover? ");
         if (scanf("%d", &qtdMesas) != 1 || qtdMesas <= 0 || qtdMesas > 5) {
             printf("Entrada inválida! Insira um número válido.\n");
-            while (getchar() != '\n'); // Limpa buffer
+            while (getchar() != '\n');
             continue;
         }
         if (qtdMesas == 0) {
@@ -614,8 +637,9 @@ void deleteOneReserve() {
             return;
         }
 
+        //BACK-UP DE MESAS, CASO O USUARIO NAO CONFIRME A AÇÃO DE REMOVER.
         std::list<int> oldMesas;
-        for (int count = 0; count < qtdMesas; ++count) {
+        for (int i = 0; i < qtdMesas; ++i) {
             printf("Escolha o número da mesa que você deseja tirar a reserva: ");
             if (scanf("%d", &nmr_mesa) != 1) {
                 changeTextColor(12);
@@ -633,6 +657,8 @@ void deleteOneReserve() {
                 return;
             }
             bool findMesas = false;
+
+            //FOR EACH PRA REMOVER O ELEMENTO DA LISTA
             for (int mesa: pessoas[index_i][index_j].listMesasReservadas) {
                 if (mesa == nmr_mesa) {
                     pessoas[index_i][index_j].listMesasReservadas.remove(nmr_mesa);
@@ -649,6 +675,8 @@ void deleteOneReserve() {
                 while (getchar() != '\n');
                 continue;
             }
+
+            // FOR PARA REMOVER DA MATRIZ A RESERVA
             int cont = 1;
             for (int i = 0; i < 30; ++i) {
                 for (int j = 0; j < 30; ++j) {
@@ -662,6 +690,7 @@ void deleteOneReserve() {
                 }
                 if (breakExternLoop) break;
             }
+
         }
         returnConfirm = confirmAction();
         if (returnConfirm == 0) {
@@ -671,6 +700,8 @@ void deleteOneReserve() {
             pessoas[index_i][index_j].listMesasReservadas = oldMesas;
         }
     }
+
+    //SE A LISTA FICAR VAZIA, REMOVER A 'PESSOA' DA MATRIZ DE PESSOAS
     if (pessoas[index_i][index_j].listMesasReservadas.empty()) {
         pessoas[index_i][index_j].nome[0] = '0';
         printf("%s", pessoas[index_i][index_j].nome);
@@ -1061,11 +1092,14 @@ void takeOrder() {
 
 bool updateName(int index_i, int index_j) {
     char nome[30];
+
     printf("Digite 0 para sair.\n");
     printf("\n\nDigite o novo nome! \n");
     while (getchar() != '\n');
     scanf("%[^\n]", nome);
-    strcmp(nome, parseString(nome));
+
+    strcpy(nome, parseString(nome));
+
     if (!verifyString(nome)) { return false; }
     if (nome[0] == '0') {
         changeTextBold();
@@ -1073,9 +1107,9 @@ bool updateName(int index_i, int index_j) {
         resetText();
         system("pause");
         while (getchar() != '\n');
-        mainMenu();
+        mainMenu();gi
     }
-    printf("Nome antigo: %s\n", pessoas[index_i][index_j].nome);
+    printf("\nNome antigo: %s\n", pessoas[index_i][index_j].nome);
     printf("Nome novo: %s\n", nome);
     strcpy(pessoas[index_i][index_j].nome, nome);
     return true;
